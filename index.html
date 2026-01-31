@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J-Exam Pro V4</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    <style>
+        :root { --p: #4361ee; --s: #10b981; --d: #ef4444; --bg: #f8faff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 15px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+        @media (max-width: 850px) { 
+            .container { grid-template-columns: 1fr; } 
+            .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 100; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); }
+            #quiz-area { margin-bottom: 250px; }
+        }
+        
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .sidebar { position: sticky; top: 15px; height: fit-content; }
+        .hidden { display: none !important; }
+
+        .q-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .q-num { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #eee; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .q-num.done { background: var(--s); color: white; }
+        .q-num.active { border: 2px solid var(--p); }
+
+        .q-card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 5px solid var(--p); }
+        .opt { padding: 12px; border: 1px solid #eee; margin: 8px 0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; font-size: 15px; }
+        .opt:hover { background: #f0f4ff; }
+        .opt input { margin-right: 12px; transform: scale(1.3); }
+
+        button { background: var(--p); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin: 5px 0; }
+        #timer { font-size: 28px; font-weight: 800; text-align: center; color: var(--d); margin-bottom: 10px; }
+        .res-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .res-table th, .res-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen" class="card" style="max-width: 350px; margin: 80px auto; text-align: center;">
+    <h2 style="color: var(--p);">J-Exam Kirish</h2>
+    <input type="text" id="user-name" placeholder="F.I.SH kiriting" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd; box-sizing: border-box;">
+    <button onclick="login()">Boshlash</button>
+</div>
+
+<div id="main-app" class="container hidden">
+    <div id="quiz-area">
+        <div id="admin-panel" class="card hidden" style="border: 2px solid var(--d); margin-bottom: 20px;">
+            <h3>Admin Panel</h3>
+            <input type="file" id="file-in" accept=".docx">
+            <div id="status"></div>
+            <h4>Jonli natijalar:</h4>
+            <table class="res-table"><tbody id="res-body"></tbody></table>
+        </div>
+
+        <div id="welcome-card" class="card" style="text-align:center;">
+            <h2 id="hello-text"></h2>
+            <p id="test-info">Tayyor bo'lsangiz tugmani bosing</p>
+            <button id="start-btn" onclick="startQuiz()" class="hidden" style="background:var(--s)">Savollarni ochish</button>
+        </div>
+        <div id="questions-list" class="hidden"></div>
+    </div>
+
+    <div id="sidebar" class="sidebar hidden">
+        <div class="card">
+            <div id="timer">30:00</div>
+            <div class="q-grid" id="q-grid"></div>
+            <button onclick="finishQuiz()" style="background: var(--d); margin-top: 15px;">Yakunlash</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-screen" class="card hidden" style="max-width: 450px; margin: 80px auto; text-align: center;">
+    <h2>Imtihon yakunlandi</h2>
+    <h1 id="score-text" style="font-size: 45px; color: var(--p); margin: 10px 0;"></h1>
+    <div id="grade-badge" style="font-size: 22px; font-weight: bold; margin-bottom: 20px;"></div>
+    <button onclick="location.reload()">Bosh sahifaga qaytish</button>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBcn2bYdcDlWB-TFtuz5qWanO3aF_b9NCY",
+        authDomain: "j-exam.firebaseapp.com",
+        databaseURL: "https://j-exam-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "j-exam",
+        storageBucket: "j-exam.firebasestorage.app",
+        messagingSenderId: "370411029242",
+        appId: "1:370411029242:web:3a677a92d2b4309a8dff43"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let uName = "", rawQs = [], mixedQs = [], userAns = {}, timer;
+
+    function login() {
+        uName = document.getElementById('user-name').value.trim();
+        if(!uName) return alert("Ismingizni yozing!");
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('hello-text').innerText = "Nomzod: " + uName;
+        if(uName === "admin777") {
+            document.getElementById('admin-panel').classList.remove('hidden');
+            db.ref('results').on('value', s => {
+                let h = "<tr><th>Ism</th><th>Ball</th><th>Baho</th></tr>";
+                if(s.val()) Object.values(s.val()).forEach(r => { h += `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.grade}</td></tr>`; });
+                document.getElementById('res-body').innerHTML = h;
+            });
+        }
+    }
+
+    db.ref('currentTest').on('value', s => {
+        if(s.val()) {
+            rawQs = s.val().questions;
+            document.getElementById('test-info').innerText = "Umumiy savollar: " + rawQs.length + " ta. Testda 25 tasi tanlanadi.";
+            document.getElementById('start-btn').classList.remove('hidden');
+        }
+    });
+
+    function startQuiz() {
+        // Tasodifiy 25 tasini olish
+        let shuffled = [...rawQs].sort(() => 0.5 - Math.random()).slice(0, 25);
+        
+        // Variantlarni aralashtirish
+        mixedQs = shuffled.map(q => {
+            let optionsWithKey = q.options.map((o, i) => ({ text: o, isCorrect: i === q.correct }));
+            optionsWithKey.sort(() => 0.5 - Math.random());
+            return {
+                title: q.title,
+                options: optionsWithKey.map(o => o.text),
+                correct: optionsWithKey.findIndex(o => o.isCorrect)
+            };
+        });
+
+        document.getElementById('welcome-card').classList.add('hidden');
+        document.getElementById('questions-list').classList.remove('hidden');
+        document.getElementById('sidebar').classList.remove('hidden');
+        renderQs();
+        renderGrid();
+        startTime();
+    }
+
+    function renderQs() {
+        let h = "";
+        mixedQs.forEach((q, i) => {
+            h += `<div class="q-card" id="q-box-${i}">
+                <p><b>${i+1}. ${q.title}</b></p>
+                ${q.options.map((o, oi) => `
+                    <div class="opt" onclick="choose(${i}, ${oi})">
+                        <input type="radio" name="q${i}" id="q${i}o${oi}"> ${o}
+                    </div>
+                `).join('')}
+            </div>`;
+        });
+        document.getElementById('questions-list').innerHTML = h;
+    }
+
+    function renderGrid() {
+        let h = "";
+        mixedQs.forEach((_, i) => { h += `<div class="q-num" id="grid-${i}" onclick="scrollQ(${i})">${i+1}</div>`; });
+        document.getElementById('q-grid').innerHTML = h;
+    }
+
+    function choose(qI, oI) {
+        userAns[qI] = oI;
+        document.getElementById(`q${qI}o${oI}`).checked = true;
+        document.getElementById(`grid-${qI}`).classList.add('done');
+    }
+
+    function scrollQ(i) {
+        document.getElementById(`q-box-${i}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.querySelectorAll('.q-num').forEach(el => el.classList.remove('active'));
+        document.getElementById(`grid-${i}`).classList.add('active');
+    }
+
+    function startTime() {
+        let t = 30 * 60;
+        timer = setInterval(() => {
+            t--;
+            let m = Math.floor(t/60), s = t%60;
+            document.getElementById('timer').innerText = `${m}:${s<10?'0':''}${s}`;
+            if(t <= 0) finishQuiz();
+        }, 1000);
+    }
+
+    function finishQuiz() {
+        clearInterval(timer);
+        let correct = 0;
+        mixedQs.forEach((q, i) => { if(userAns[i] === q.correct) correct++; });
+        let p = (correct / mixedQs.length) * 100;
+        let g = p >= 86 ? 5 : (p >= 71 ? 4 : (p >= 55 ? 3 : 2));
+
+        db.ref('results').push({ name: uName, score: correct + "/25", grade: g });
+        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('score-text').innerText = correct + " / 25";
+        document.getElementById('grade-badge').innerText = "Bahongiz: " + g;
+    }
+
+    document.getElementById('file-in').onchange = function(e) {
+        let r = new FileReader();
+        r.onload = function(ev) {
+            mammoth.extractRawText({arrayBuffer: ev.target.result}).then(res => {
+                let blocks = res.value.split('++++').filter(b => b.length > 5);
+                let list = [];
+                blocks.forEach(b => {
+                    let parts = b.split('====').map(x => x.trim());
+                    let opts = [], corr = 0;
+                    parts.slice(1).forEach((o, i) => {
+                        if(o.startsWith('#')) { corr = i; opts.push(o.replace('#','')); }
+                        else opts.push(o);
+                    });
+                    list.push({ title: parts[0], options: opts, correct: corr });
+                });
+                db.ref('currentTest').set({ name: e.target.files[0].name, questions: list });
+                alert("Yuklandi!");
+            });
+        };
+        r.readAsArrayBuffer(e.target.files[0]);
+    };
+</script>
+</body>
+</html>
