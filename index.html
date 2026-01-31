@@ -3,104 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J-Exam Pro | Online Test</title>
+    <title>J-Exam Multi & Admin | Online Test</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #4f46e5; --success: #10b981; --error: #ef4444; --warning: #f59e0b; --bg: #f3f4f6; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); margin: 0; color: #1f2937; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+        :root { --primary: #4f46e5; --success: #10b981; --error: #ef4444; --bg: #f3f4f6; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 15px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .center-card { max-width: 400px; margin: 50px auto; text-align: center; }
         
-        /* Login & Result Cards */
-        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); transition: 0.3s; }
-        .center-card { max-width: 450px; margin: 60px auto; text-align: center; }
+        /* Admin Table */
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        .admin-table th, .admin-table td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; }
+        .admin-table th { background: #f9fafb; }
         
-        /* Sidebar */
-        .sidebar { position: sticky; top: 20px; height: fit-content; }
-        .q-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 15px; }
-        .q-num { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #e5e7eb; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; }
+        .test-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .test-btn { padding: 20px; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer; transition: 0.3s; font-weight: bold; text-align: center; }
+        .test-btn.active { border-color: var(--primary); background: var(--primary); color: white; }
+
+        .q-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
+        .q-num { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #e5e7eb; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
         .q-num.done { background: var(--primary); color: white; }
-        .q-num.active { ring: 3px solid #c7d2fe; border: 2px solid var(--primary); }
 
-        /* Question Styles */
-        .q-card { background: white; padding: 25px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 6px solid var(--primary); }
-        .option { padding: 15px; border: 2px solid #f3f4f6; margin: 10px 0; border-radius: 12px; cursor: pointer; display: flex; align-items: center; transition: 0.2s; }
-        .option:hover { background: #f9fafb; border-color: var(--primary); }
+        .q-card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 5px solid var(--primary); }
+        .option { padding: 12px; border: 2px solid #f3f4f6; margin: 8px 0; border-radius: 10px; cursor: pointer; }
         .option.selected { border-color: var(--primary); background: #eff6ff; }
-        .option input { margin-right: 15px; width: 18px; height: 18px; cursor: pointer; }
+        .correct-ans { background: #ecfdf5; border-color: var(--success); }
+        .wrong-ans { background: #fef2f2; border-color: var(--error); }
 
-        /* Analysis Styles */
-        .analysis-card { border-left-width: 8px; }
-        .correct-ans { background: #ecfdf5; border: 2px solid var(--success); }
-        .wrong-ans { background: #fef2f2; border: 2px solid var(--error); }
-        .feedback { margin-top: 10px; font-weight: bold; font-size: 14px; }
-
-        /* UI Elements */
-        button { background: var(--primary); color: white; border: none; padding: 14px 24px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; font-size: 16px; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        #timer { font-size: 32px; font-weight: 850; color: var(--error); font-variant-numeric: tabular-nums; }
-        input[type="text"] { width: 100%; padding: 14px; border-radius: 12px; border: 2px solid #e5e7eb; margin-bottom: 20px; box-sizing: border-box; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 14px; font-weight: 600; margin-top: 5px; }
+        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; }
+        #timer { font-size: 30px; font-weight: 800; color: var(--error); text-align: center; }
 
         @media (max-width: 850px) {
-            .container { grid-template-columns: 1fr; padding: 10px; }
-            .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; box-sizing: border-box; z-index: 100; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 20px rgba(0,0,0,0.1); }
-            #quiz-area { margin-bottom: 280px; }
+            .container { grid-template-columns: 1fr; }
+            .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000; }
+            #quiz-area { margin-bottom: 250px; }
         }
-        .hidden { display: none !important; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div id="login-screen" class="card center-card">
-    <h1 style="color: var(--primary); margin-top: 0;">J-Exam Pro</h1>
-    <p>Bilimingizni sinash vaqti keldi!</p>
-    <input type="text" id="user-name" placeholder="F.I.SH kiriting">
-    <button onclick="login()">Testga kirish</button>
+    <h2 style="color: var(--primary)">J-Exam Multi Pro</h2>
+    <input type="text" id="user-name" placeholder="F.I.SH kiriting" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box;">
+    <button onclick="login()">Kirish</button>
 </div>
 
 <div id="app" class="container hidden">
     <div id="quiz-area">
-        <div id="admin-panel" class="card hidden" style="border: 2px solid var(--warning); margin-bottom: 20px;">
-            <h3>Admin: Test Yuklash</h3>
-            <input type="file" id="file-in" accept=".docx">
-            <div id="admin-log"></div>
+        <div id="admin-panel" class="card hidden" style="border: 2px solid #f59e0b; margin-bottom:20px;">
+            <h3>Admin Boshqaruvi</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                <div class="card" style="padding:10px; background:#fffbeb;">1-Test: <input type="file" onchange="uploadTest(this, 'test1')"></div>
+                <div class="card" style="padding:10px; background:#fffbeb;">2-Test: <input type="file" onchange="uploadTest(this, 'test2')"></div>
+            </div>
+            <h4>O'quvchilar natijalari:</h4>
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>F.I.SH</th><th>Mavzu</th><th>Ball</th><th>Baho</th><th>Vaqt</th></tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+            </div>
+            <button onclick="clearResults()" style="background:var(--error); margin-top:10px; padding:10px; font-size:12px;">Natijalarni tozalash</button>
         </div>
 
-        <div id="start-screen" class="card" style="text-align: center;">
-            <h2 id="welcome-msg"></h2>
-            <p>Testda 25 ta savol beriladi. Har bir savol va variantlar tasodifiy tartibda tushadi.</p>
-            <button id="start-btn" onclick="startQuiz()" style="background: var(--success);" class="hidden">Boshlash</button>
+        <div id="topic-screen" class="card">
+            <h3>Test mavzusini tanlang:</h3>
+            <div class="test-selector">
+                <div class="test-btn" id="btn-test1" onclick="selectTopic('test1')">1-Mavzu</div>
+                <div class="test-btn" id="btn-test2" onclick="selectTopic('test2')">2-Mavzu</div>
+            </div>
+            <button id="start-btn" onclick="startQuiz()" class="hidden" style="background:var(--success)">Testni boshlash</button>
         </div>
 
         <div id="questions-list" class="hidden"></div>
-        <div id="analysis-list" class="hidden">
-            <h2 style="margin-bottom: 20px;">Natijalar tahlili</h2>
-        </div>
+        <div id="analysis-list" class="hidden"></div>
     </div>
 
     <div id="sidebar" class="sidebar hidden">
         <div class="card">
             <div id="timer">30:00</div>
-            <div style="margin: 15px 0; font-size: 14px; color: #6b7280; font-weight: 600;">Savollar holati:</div>
             <div class="q-grid" id="q-grid"></div>
-            <button onclick="confirmFinish()" style="background: var(--error); margin-top: 20px;">Testni yakunlash</button>
+            <button onclick="finish()" style="background:var(--error); margin-top:15px;">Tugatish</button>
         </div>
     </div>
 </div>
 
 <div id="result-screen" class="card center-card hidden">
-    <h2 id="res-status"></h2>
-    <div style="font-size: 60px; font-weight: 900; color: var(--primary);" id="score-val">0</div>
-    <div id="grade-label" style="font-size: 24px; font-weight: 700;"></div>
-    <p id="res-detail"></p>
-    <button onclick="showAnalysis()" style="background: var(--success); margin-bottom: 10px;">Xatolarni ko'rish</button>
-    <button onclick="location.reload()" style="background: #6b7280;">Qaytadan boshlash</button>
+    <h2 id="grade-title">Natijangiz</h2>
+    <div style="font-size: 50px; font-weight: 900; color: var(--primary);" id="score-text"></div>
+    <p id="grade-val" style="font-size:20px; font-weight:bold;"></p>
+    <button onclick="showAnalysis()" style="background:var(--success); margin-bottom:10px;">Xatolarni ko'rish</button>
+    <button onclick="location.reload()" style="background:#6b7280;">Chiqish</button>
 </div>
 
 <script>
-    // Firebase Sozlamalari (Sizniki)
     const firebaseConfig = {
         apiKey: "AIzaSyBcn2bYdcDlWB-TFtuz5qWanO3aF_b9NCY",
         authDomain: "j-exam.firebaseapp.com",
@@ -113,40 +115,42 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let uName = "", allQs = [], testQs = [], userAns = {}, timer;
+    let uName = "", selectedKey = "", allData = {}, testQs = [], userAns = {}, timer;
 
     function login() {
         uName = document.getElementById('user-name').value.trim();
-        if(!uName) return alert("Iltimos, ismingizni yozing!");
+        if(!uName) return alert("Ismingizni yozing!");
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
-        document.getElementById('welcome-msg').innerText = "Salom, " + uName + "!";
-        if(uName === "admin777") document.getElementById('admin-panel').classList.remove('hidden');
+        if(uName === "admin777") {
+            document.getElementById('admin-panel').classList.remove('hidden');
+            loadResults();
+        }
     }
 
-    db.ref('currentTest').on('value', s => {
-        if(s.val()) {
-            allQs = s.val().questions;
-            document.getElementById('start-btn').classList.remove('hidden');
-        }
+    db.ref('multiTests').on('value', s => { 
+        allData = s.val() || {}; 
+        if(allData.test1) document.getElementById('btn-test1').innerHTML = "1-Mavzu ✅";
+        if(allData.test2) document.getElementById('btn-test2').innerHTML = "2-Mavzu ✅";
     });
 
-    function startQuiz() {
-        // Tasodifiy 25 ta savol tanlash
-        let shuffled = [...allQs].sort(() => 0.5 - Math.random()).slice(0, 25);
-        
-        // Variantlarni aralashtirish
-        testQs = shuffled.map(q => {
-            let opts = q.options.map((o, i) => ({ text: o, isCorrect: i === q.correct }));
-            opts.sort(() => 0.5 - Math.random());
-            return {
-                title: q.title,
-                options: opts.map(o => o.text),
-                correct: opts.findIndex(o => o.isCorrect)
-            };
-        });
+    function selectTopic(key) {
+        if(!allData[key]) return alert("Bu mavzuda test yuklanmagan!");
+        selectedKey = key;
+        document.querySelectorAll('.test-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + key).classList.add('active');
+        document.getElementById('start-btn').classList.remove('hidden');
+    }
 
-        document.getElementById('start-screen').classList.add('hidden');
+    function startQuiz() {
+        let raw = allData[selectedKey].questions;
+        let shuffled = [...raw].sort(() => 0.5 - Math.random()).slice(0, 25);
+        testQs = shuffled.map(q => {
+            let opts = q.options.map((o, i) => ({ text: o, isCorr: i === q.correct }));
+            opts.sort(() => 0.5 - Math.random());
+            return { title: q.title, options: opts.map(o => o.text), correct: opts.findIndex(o => o.isCorr) };
+        });
+        document.getElementById('topic-screen').classList.add('hidden');
         document.getElementById('questions-list').classList.remove('hidden');
         document.getElementById('sidebar').classList.remove('hidden');
         renderQuiz();
@@ -158,13 +162,8 @@
         let h = "";
         testQs.forEach((q, i) => {
             h += `<div class="q-card" id="q-box-${i}">
-                <p style="font-size: 18px; font-weight: 600;">${i+1}. ${q.title}</p>
-                ${q.options.map((o, oi) => `
-                    <div class="option" id="opt-${i}-${oi}" onclick="select(${i}, ${oi})">
-                        <input type="radio" name="q${i}" id="radio-${i}-${oi}">
-                        <span>${o}</span>
-                    </div>
-                `).join('')}
+                <b>${i+1}. ${q.title}</b>
+                ${q.options.map((o, oi) => `<div class="option" id="opt-${i}-${oi}" onclick="select(${i}, ${oi})">${o}</div>`).join('')}
             </div>`;
         });
         document.getElementById('questions-list').innerHTML = h;
@@ -172,7 +171,7 @@
 
     function renderGrid() {
         let h = "";
-        testQs.forEach((_, i) => { h += `<div class="q-num" id="grid-${i}" onclick="scrollQ(${i})">${i+1}</div>`; });
+        testQs.forEach((_, i) => h += `<div class="q-num" id="grid-${i}" onclick="document.getElementById('q-box-${i}').scrollIntoView()">${i+1}</div>`);
         document.getElementById('q-grid').innerHTML = h;
     }
 
@@ -180,12 +179,7 @@
         userAns[qI] = oI;
         document.querySelectorAll(`#q-box-${qI} .option`).forEach(el => el.classList.remove('selected'));
         document.getElementById(`opt-${qI}-${oI}`).classList.add('selected');
-        document.getElementById(`radio-${qI}-${oI}`).checked = true;
         document.getElementById(`grid-${qI}`).classList.add('done');
-    }
-
-    function scrollQ(i) {
-        document.getElementById(`q-box-${i}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function startTimer() {
@@ -198,39 +192,52 @@
         }, 1000);
     }
 
-    function confirmFinish() {
-        if(confirm("Testni yakunlashni xohlaysizmi?")) finish();
-    }
-
     function finish() {
         clearInterval(timer);
-        let correctCount = 0;
-        testQs.forEach((q, i) => { if(userAns[i] === q.correct) correctCount++; });
+        let correct = 0;
+        testQs.forEach((q, i) => { if(userAns[i] === q.correct) correct++; });
+        let p = (correct / testQs.length) * 100;
+        let g = p >= 86 ? 5 : (p >= 71 ? 4 : (p >= 55 ? 3 : 2));
 
-        let percent = (correctCount / testQs.length) * 100;
-        let grade = percent >= 86 ? 5 : (percent >= 71 ? 4 : (percent >= 55 ? 3 : 2));
-
-        db.ref('results').push({ name: uName, score: correctCount, grade: grade, time: new Date().toLocaleString() });
+        db.ref('results').push({ 
+            name: uName, 
+            topic: selectedKey === 'test1' ? '1-Mavzu' : '2-Mavzu', 
+            score: correct, 
+            grade: g,
+            time: new Date().toLocaleString('uz-UZ')
+        });
 
         document.getElementById('app').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
-        document.getElementById('score-val').innerText = correctCount + "/25";
-        document.getElementById('grade-label').innerText = "Baho: " + grade;
-        document.getElementById('res-status').innerText = grade > 2 ? "Tabriklaymiz!" : "Yaxshiroq tayyorlaning!";
+        document.getElementById('score-text').innerText = correct + "/25";
+        document.getElementById('grade-val').innerText = "Baho: " + g;
+    }
+
+    function loadResults() {
+        db.ref('results').on('value', s => {
+            let h = "";
+            s.forEach(item => {
+                let r = item.val();
+                h = `<tr><td>${r.name}</td><td>${r.topic}</td><td>${r.score}</td><td><b>${r.grade}</b></td><td>${r.time}</td></tr>` + h;
+            });
+            document.getElementById('results-body').innerHTML = h;
+        });
+    }
+
+    function clearResults() {
+        if(confirm("Barcha natijalarni o'chirib tashlamoqchimisiz?")) db.ref('results').remove();
     }
 
     function showAnalysis() {
         document.getElementById('result-screen').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
         document.getElementById('sidebar').classList.add('hidden');
-        document.getElementById('questions-list').classList.add('hidden');
-        const list = document.getElementById('analysis-list');
+        let list = document.getElementById('analysis-list');
         list.classList.remove('hidden');
-
-        let h = "<h2>Xatolar ustida ishlash</h2>";
+        let h = "<h2>Xatolar tahlili</h2>";
         testQs.forEach((q, i) => {
-            let isCorrect = userAns[i] === q.correct;
-            h += `<div class="q-card analysis-card" style="border-left-color: ${isCorrect ? 'var(--success)' : 'var(--error)'}">
+            let isCorr = userAns[i] === q.correct;
+            h += `<div class="q-card" style="border-left-color: ${isCorr?'#10b981':'#ef4444'}">
                 <p><b>${i+1}. ${q.title}</b></p>
                 ${q.options.map((o, oi) => {
                     let cls = "";
@@ -238,21 +245,17 @@
                     else if(oi === userAns[i]) cls = "wrong-ans";
                     return `<div class="option ${cls}">${o}</div>`;
                 }).join('')}
-                <div class="feedback" style="color: ${isCorrect ? 'var(--success)' : 'var(--error)'}">
-                    ${isCorrect ? '✓ To\'g\'ri' : '✗ Noto\'g\'ri (To\'g\'ri javob belgilandi)'}
-                </div>
             </div>`;
         });
-        h += `<button onclick="location.reload()" style="background:var(--primary)">Yopish</button>`;
+        h += `<button onclick="location.reload()">Yopish</button>`;
         list.innerHTML = h;
         window.scrollTo(0,0);
     }
 
-    // Admin: Word yuklash
-    document.getElementById('file-in').onchange = function(e) {
+    function uploadTest(input, key) {
         let r = new FileReader();
-        r.onload = function(ev) {
-            mammoth.extractRawText({arrayBuffer: ev.target.result}).then(res => {
+        r.onload = function(e) {
+            mammoth.extractRawText({arrayBuffer: e.target.result}).then(res => {
                 let blocks = res.value.split('++++').filter(b => b.trim().length > 5);
                 let list = blocks.map(b => {
                     let p = b.split('====').map(x => x.trim());
@@ -263,12 +266,12 @@
                     });
                     return { title: p[0], options: opts, correct: corr };
                 });
-                db.ref('currentTest').set({ questions: list });
-                alert("Muvaffaqiyatli yuklandi: " + list.length + " ta savol.");
+                db.ref('multiTests/' + key).set({ questions: list });
+                alert("Yuklandi!");
             });
         };
-        r.readAsArrayBuffer(e.target.files[0]);
-    };
+        r.readAsArrayBuffer(input.files[0]);
+    }
 </script>
 </body>
 </html>
