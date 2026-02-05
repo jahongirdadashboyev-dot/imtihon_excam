@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>J-Exam Pro - Score & Percent</title>
+    <title>J-Exam Pro - Admin & Results</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
@@ -14,40 +14,38 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 120px; }
 
-        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 15px; }
+        .container { width: 100%; max-width: 700px; margin: 0 auto; padding: 15px; }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
         /* Top Bar */
         .top-bar { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #eee; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
         #timer { font-size: 22px; font-weight: 800; color: var(--error); }
 
-        /* Natija sirkulari */
+        /* Admin Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { padding: 10px; border: 1px solid #eee; text-align: left; }
+        th { background: #f8fafc; color: var(--dark); }
+
+        /* Result Circle */
         .result-circle {
-            width: 150px; height: 150px; border-radius: 50%;
+            width: 140px; height: 140px; border-radius: 50%;
             background: conic-gradient(var(--success) 0deg, #eee 0deg);
             display: flex; align-items: center; justify-content: center;
-            margin: 20px auto; position: relative; transition: 1s ease-in-out;
+            margin: 20px auto; position: relative;
         }
-        .result-circle::before {
-            content: ""; position: absolute; width: 120px; height: 120px;
-            background: white; border-radius: 50%;
-        }
-        .result-inner { position: relative; text-align: center; z-index: 1; }
-        .percent-text { font-size: 28px; font-weight: 900; color: var(--dark); }
+        .result-circle::before { content: ""; position: absolute; width: 110px; height: 110px; background: white; border-radius: 50%; }
+        .percent-text { position: relative; font-size: 26px; font-weight: 900; color: var(--dark); }
 
-        .q-card b { display: block; margin-bottom: 15px; font-size: 17px; color: var(--dark); }
-        .option { padding: 14px; border: 2px solid #f3f4f6; margin: 10px 0; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        /* General UI */
+        .option { padding: 15px; border: 2px solid #f3f4f6; margin: 10px 0; border-radius: 12px; cursor: pointer; transition: 0.2s; }
         .option.selected { border-color: var(--primary); background: #f5f3ff; color: var(--primary); font-weight: 600; }
-
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1000; border-radius: 20px 20px 0 0; }
-        .q-grid { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; }
-        .q-num { min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 10px; font-weight: bold; flex-shrink: 0; }
+        .q-grid { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scrollbar-width: none; }
+        .q-num { min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 10px; font-weight: bold; flex-shrink: 0; cursor: pointer; }
         .q-num.done { background: var(--primary); color: white; }
 
-        .res-correct { background: #ecfdf5; color: #065f46; padding: 10px; border-radius: 10px; margin-top: 5px; border: 1px solid #a7f3d0; }
-        .res-wrong { background: #fef2f2; color: #991b1b; padding: 10px; border-radius: 10px; margin-top: 5px; border: 1px solid #fecaca; }
-
-        button { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: 700; cursor: pointer; }
+        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: 700; cursor: pointer; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 12px; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -59,14 +57,33 @@
 </div>
 
 <div class="container">
-    <div id="login-screen" class="card" style="margin-top: 50px;">
-        <h2 style="text-align:center; color: var(--primary);">J-Exam Login</h2>
-        <input type="text" id="user-name" style="width:100%; padding:15px; border:1px solid #ddd; border-radius:10px; margin-bottom:15px" placeholder="Ismingizni yozing">
-        <button onclick="login()">Boshlash</button>
+    <div id="login-screen" class="card" style="margin-top: 50px; text-align: center;">
+        <h2 style="color: var(--primary);">J-Exam Tizimi</h2>
+        <input type="text" id="user-name" placeholder="F.I.SH kiriting">
+        <button onclick="login()">Kirish</button>
+        <p style="font-size: 12px; color: #999; margin-top: 15px;">Adminlik uchun: admin777</p>
+    </div>
+
+    <div id="admin-panel" class="card hidden">
+        <h3 style="margin-top:0">Admin Boshqaruvi</h3>
+        <label>Mavzu nomi:</label>
+        <input type="text" id="new-test-name" placeholder="Masalan: Tarix 1-blok">
+        <input type="file" id="upload-file" accept=".docx">
+        <button onclick="handleFileUpload()" style="background:var(--success)">Bazaga yuklash (.docx)</button>
+        
+        <h4 style="margin: 20px 0 10px 0">Natijalar jadvali:</h4>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>FISH</th><th>Ball</th><th>Foiz</th><th>Mavzu</th></tr></thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
+        <button onclick="clearResults()" style="background:var(--error); margin-top:15px; padding: 10px;">Barcha natijalarni o'chirish</button>
+        <button onclick="location.reload()" style="background: #666; margin-top: 10px;">Chiqish</button>
     </div>
 
     <div id="topic-screen" class="card hidden">
-        <h3>Mavzuni tanlang:</h3>
+        <h3>Test mavzusini tanlang:</h3>
         <div id="test-list"></div>
         <button id="start-btn" class="hidden" onclick="startQuiz()" style="background:var(--success); margin-top: 15px;">TESTNI BOSHLASH</button>
     </div>
@@ -74,21 +91,12 @@
     <div id="questions-list" class="hidden"></div>
 
     <div id="result-screen" class="card hidden">
-        <h2 style="text-align:center; margin-bottom:10px">Natija</h2>
-        
-        <div class="result-circle" id="res-circle">
-            <div class="result-inner">
-                <div class="percent-text" id="res-percent">0%</div>
-                <div style="font-size:12px; color:#666">Umumiy ball</div>
-            </div>
-        </div>
-
+        <h2 style="text-align:center;">Sizning Natijangiz</h2>
+        <div class="result-circle" id="res-circle"><div class="percent-text" id="res-percent">0%</div></div>
         <div style="display:flex; justify-content: space-around; text-align:center; margin-bottom:20px">
             <div><b id="res-score" style="font-size:20px; color:var(--success)">0</b><br><small>To'g'ri</small></div>
-            <div><b id="res-total" style="font-size:20px; color:var(--primary)">25</b><br><small>Jami</small></div>
-            <div><b id="res-points" style="font-size:20px; color:var(--dark)">0</b><br><small>Ball (100)</small></div>
+            <div><b id="res-points" style="font-size:20px; color:var(--primary)">0</b><br><small>Ball (100)</small></div>
         </div>
-
         <div id="analysis-box"></div>
         <button onclick="location.reload()" style="background:var(--dark); margin-top:20px">Chiqish</button>
     </div>
@@ -96,11 +104,10 @@
 
 <div id="bottom-bar" class="bottom-nav hidden">
     <div class="q-grid" id="q-grid"></div>
-    <button onclick="confirmFinish()" style="background:var(--error); margin-top:10px">Tugatish</button>
+    <button onclick="confirmFinish()" style="background:var(--error); margin-top:10px; padding:10px">Testni Yakunlash</button>
 </div>
 
 <script>
-    // --- FIREBASE SETTINGS ---
     const firebaseConfig = {
         apiKey: "AIzaSyBcn2bYdcDlWB-TFtuz5qWanO3aF_b9NCY",
         authDomain: "j-exam.firebaseapp.com",
@@ -118,17 +125,23 @@
     function login() {
         uName = document.getElementById('user-name').value.trim();
         if(!uName) return alert("Ism kiriting!");
+        
         document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('user-display').innerText = uName;
-        document.getElementById('topic-screen').classList.remove('hidden');
-        loadTests();
+        if(uName.toLowerCase() === "admin777") {
+            document.getElementById('admin-panel').classList.remove('hidden');
+            loadAdminResults();
+        } else {
+            document.getElementById('user-display').innerText = uName;
+            document.getElementById('topic-screen').classList.remove('hidden');
+            loadTests();
+        }
     }
 
     function loadTests() {
         db.ref('tests').on('value', s => {
             let tests = s.val(), h = "";
             for(let id in tests) h += `<div onclick="selectTest('${id}')" class="option">${id}</div>`;
-            document.getElementById('test-list').innerHTML = h;
+            document.getElementById('test-list').innerHTML = h || "Hozircha test mavjud emas.";
         });
     }
 
@@ -192,45 +205,82 @@
         }, 1000);
     }
 
-    function confirmFinish() { if(confirm("Tugatasizmi?")) finishQuiz(); }
+    function confirmFinish() { if(confirm("Testni yakunlaysizmi?")) finishQuiz(); }
 
     function finishQuiz() {
         clearInterval(timer);
         let score = 0;
-        let total = testQs.length;
         let analysisHtml = "";
-
         testQs.forEach((q, i) => {
             let uIdx = userAns[i];
             let isCorrect = uIdx === q.correct;
             if(isCorrect) score++;
-            analysisHtml += `<div class="card" style="padding:15px; margin-bottom:10px">
+            analysisHtml += `<div class="card" style="padding:10px; margin-bottom:10px; border-left: 5px solid ${isCorrect?'#10b981':'#ef4444'}">
                 <p><b>${i+1}. ${q.title}</b></p>
-                <div class="${isCorrect ? 'res-correct' : 'res-wrong'}">Siz: ${uIdx !== undefined ? q.options[uIdx] : "Javobsiz"}</div>
-                ${!isCorrect ? `<div class="res-correct">To'g'ri: ${q.options[q.correct]}</div>` : ''}
+                <div style="font-size:14px">To'g'ri javob: ${q.options[q.correct]}</div>
             </div>`;
         });
 
-        let percent = Math.round((score / total) * 100);
-        let points = (score * (100 / total)).toFixed(1);
+        let percent = Math.round((score / testQs.length) * 100);
+        let points = (score * (100 / testQs.length)).toFixed(1);
 
-        // Firebase-ga yuborish
-        db.ref('results').push({ name: uName, score, total, percent, points, test: selectedTestId });
+        db.ref('results').push({ name: uName, score, percent, points, test: selectedTestId });
 
         document.getElementById('questions-list').classList.add('hidden');
         document.getElementById('bottom-bar').classList.add('hidden');
         document.getElementById('top-nav').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
-
-        // Natijani ko'rsatish
         document.getElementById('res-percent').innerText = percent + "%";
         document.getElementById('res-score').innerText = score;
-        document.getElementById('res-total').innerText = total;
         document.getElementById('res-points').innerText = points;
         document.getElementById('res-circle').style.background = `conic-gradient(var(--success) ${percent * 3.6}deg, #eee 0deg)`;
         document.getElementById('analysis-box').innerHTML = analysisHtml;
         window.scrollTo(0,0);
     }
+
+    // Admin Tools
+    async function handleFileUpload() {
+        const fileInput = document.getElementById('upload-file');
+        const testName = document.getElementById('new-test-name').value.trim();
+        if(!fileInput.files[0] || !testName) return alert("Mavzu nomi va faylni tanlang!");
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const res = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+            const qs = parseWord(res.value);
+            db.ref('tests/' + testName).set(qs).then(() => alert("Test bazaga yuklandi!"));
+        };
+        reader.readAsArrayBuffer(fileInput.files[0]);
+    }
+
+    function parseWord(text) {
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l !== "");
+        let quiz = [], currentQ = null;
+        lines.forEach(line => {
+            if (line === "++++") { if (currentQ) quiz.push(currentQ); currentQ = { title: "", options: [], correct: 0 }; }
+            else if (line === "====") return;
+            else if (currentQ && currentQ.title === "") currentQ.title = line;
+            else if (currentQ) {
+                let isC = line.startsWith("#");
+                if (isC) currentQ.correct = currentQ.options.length;
+                currentQ.options.push(isC ? line.replace("#","").trim() : line);
+            }
+        });
+        if (currentQ) quiz.push(currentQ); return quiz;
+    }
+
+    function loadAdminResults() {
+        db.ref('results').on('value', s => {
+            let h = "";
+            if(s.val()) {
+                Object.values(s.val()).reverse().forEach(r => {
+                    h += `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.percent}%</td><td>${r.test}</td></tr>`;
+                });
+            }
+            document.getElementById('results-body').innerHTML = h;
+        });
+    }
+    function clearResults() { if(confirm("O'chirilsinmi?")) db.ref('results').remove(); }
 </script>
 </body>
 </html>
