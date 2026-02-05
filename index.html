@@ -21,12 +21,10 @@
         .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
         .center-card { max-width: 450px; margin: 8% auto; text-align: center; }
         
-        /* Savollar dizayni */
         .q-card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 6px solid #ddd; }
         .option { padding: 14px; border: 2px solid #f3f4f6; margin: 10px 0; border-radius: 10px; cursor: pointer; transition: 0.2s; }
         .option.selected { border-color: var(--primary); background: #eff6ff; font-weight: 600; }
         
-        /* Grid (Raqamlar) */
         .q-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
         .q-num { height: 40px; display: flex; align-items: center; justify-content: center; background: #e5e7eb; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
         .q-num.done { background: var(--primary); color: white; }
@@ -36,11 +34,8 @@
         .hidden { display: none; }
         button { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; }
 
-        /* --- TELEFON UCHUN IXCHAM DIZAYN (MEDIA QUERY) --- */
         @media (max-width: 850px) {
             .container { grid-template-columns: 1fr; padding: 10px; }
-            
-            /* Pastki panel (Sidebar) */
             .sidebar { 
                 position: fixed; bottom: 0; left: 0; width: 100%; 
                 z-index: 1000; background: white; 
@@ -48,29 +43,10 @@
                 border-radius: 20px 20px 0 0; padding: 10px; box-sizing: border-box;
             }
             .sidebar .card { padding: 10px; margin-bottom: 0; box-shadow: none; }
-            
-            /* Timer kichraytirildi */
             #timer { font-size: 24px; margin-bottom: 8px; }
-
-            /* Savollar raqami endi yoniga skroll bo'ladi (IXCHAMLIK KALITI) */
-            .q-grid { 
-                display: flex; 
-                overflow-x: auto; 
-                gap: 8px; 
-                padding: 5px 0 10px 0;
-                -webkit-overflow-scrolling: touch; /* Silliq skroll */
-            }
-            .q-num { 
-                min-width: 40px; 
-                height: 40px; 
-                flex-shrink: 0; /* Siqilib qolmasligi uchun */
-            }
-            
-            /* Savollar ro'yxati panel ustiga chiqib qolmasligi uchun */
+            .q-grid { display: flex; overflow-x: auto; gap: 8px; padding: 5px 0 10px 0; -webkit-overflow-scrolling: touch; }
+            .q-num { min-width: 40px; height: 40px; flex-shrink: 0; }
             #quiz-area { margin-bottom: 160px; }
-            
-            hr { margin: 10px 0; }
-            .btn-error { padding: 10px; font-size: 14px; }
         }
 
         .is-correct { background: #d1fae5 !important; border-color: var(--success) !important; color: #065f46; }
@@ -92,7 +68,6 @@
         <div id="admin-panel" class="card hidden" style="border: 2px solid #f59e0b;">
             <h3 style="margin-top:0; color: #b45309;">Admin Boshqaruvi</h3>
             <input type="file" id="doc-upload" onchange="uploadTest(this)">
-            <div id="admin-stats"></div>
             <table style="width: 100%; font-size: 12px; margin-top: 10px;" border="1" cellspacing="0">
                 <thead><tr><th>F.I.SH</th><th>Ball</th><th>Baho</th></tr></thead>
                 <tbody id="results-body"></tbody>
@@ -128,7 +103,6 @@
 </div>
 
 <script>
-    // Firebase Config (Sizniki qoldi)
     const firebaseConfig = {
         apiKey: "AIzaSyBcn2bYdcDlWB-TFtuz5qWanO3aF_b9NCY",
         authDomain: "j-exam.firebaseapp.com",
@@ -170,7 +144,21 @@
     function startQuiz() {
         db.ref('tests/' + selectedTestId).once('value', s => {
             let data = s.val();
-            testQs = data.sort(() => 0.5 - Math.random()).slice(0, 25);
+            
+            // 1. Savollarni aralashtirish va 25 tasini olish
+            let shuffled = data.sort(() => 0.5 - Math.random()).slice(0, 25);
+
+            // 2. Variantlarni ham har bir savol ichida aralashtirish
+            testQs = shuffled.map(q => {
+                const correctText = q.options[q.correct]; // Asl to'g'ri javob matni
+                let opts = [...q.options].sort(() => 0.5 - Math.random()); // Variantlarni qorishtirish
+                return {
+                    title: q.title,
+                    options: opts,
+                    correct: opts.indexOf(correctText) // Yangi indeksni topish
+                };
+            });
+
             isTestRunning = true;
             document.getElementById('topic-screen').classList.add('hidden');
             document.getElementById('questions-list').classList.remove('hidden');
@@ -183,10 +171,15 @@
 
     function renderQuiz() {
         let h = "";
+        const letters = ['A', 'B', 'C', 'D', 'E'];
         testQs.forEach((q, i) => {
             h += `<div class="q-card" id="q-${i}">
                 <p><b>${i+1}. ${q.title}</b></p>
-                ${q.options.map((o, oi) => `<div class="option" id="opt-${i}-${oi}" onclick="selectAnswer(${i}, ${oi})">${o}</div>`).join('')}
+                ${q.options.map((o, oi) => `
+                    <div class="option" id="opt-${i}-${oi}" onclick="selectAnswer(${i}, ${oi})">
+                        <b>${letters[oi]})</b> ${o}
+                    </div>
+                `).join('')}
             </div>`;
         });
         document.getElementById('questions-list').innerHTML = h;
@@ -248,13 +241,14 @@
         let list = document.getElementById('analysis-list');
         list.classList.remove('hidden');
         let h = "<h2>Tahlil</h2>";
+        const letters = ['A', 'B', 'C', 'D', 'E'];
         testQs.forEach((q, i) => {
             let isCorrect = userAns[i] === q.correct;
             h += `<div class="q-card" style="border-left-color: ${isCorrect ? 'var(--success)' : 'var(--error)'}">
                 <p><b>${i+1}. ${q.title}</b></p>
                 ${q.options.map((o, oi) => {
                     let cls = (oi === q.correct) ? 'is-correct' : (oi === userAns[i] ? 'is-wrong' : '');
-                    return `<div class="option ${cls}">${o}</div>`;
+                    return `<div class="option ${cls}"><b>${letters[oi]})</b> ${o}</div>`;
                 }).join('')}
             </div>`;
         });
