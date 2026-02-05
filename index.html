@@ -2,8 +2,8 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>J-Exam Pro - Natijalar bilan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>J-Exam - Modern Mobile</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
@@ -11,85 +11,89 @@
     
     <style>
         :root { --primary: #4f46e5; --success: #10b981; --error: #ef4444; --bg: #f3f4f6; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; user-select: none; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        .center-card { max-width: 450px; margin: 8% auto; text-align: center; }
-        .hidden { display: none !important; }
-        
-        /* Quiz */
-        .q-card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 6px solid var(--primary); }
-        .option { padding: 14px; border: 2px solid #f3f4f6; margin: 10px 0; border-radius: 10px; cursor: pointer; }
-        .option.selected { border-color: var(--primary); background: #eff6ff; font-weight: bold; }
-        
-        /* Results Style */
-        .res-correct { background: #d1fae5; border-color: var(--success); color: #065f46; padding: 10px; border-radius: 8px; margin-top: 5px; }
-        .res-wrong { background: #fee2e2; border-color: var(--error); color: #991b1b; padding: 10px; border-radius: 8px; margin-top: 5px; }
-        .score-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin: 20px auto; color: var(--primary); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; padding-bottom: 100px; }
 
-        .q-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        .q-num { height: 40px; display: flex; align-items: center; justify-content: center; background: #e5e7eb; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .container { width: 100%; max-width: 800px; margin: 0 auto; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
+
+        /* Timer tepada qat'iy turishi uchun */
+        .top-bar { position: sticky; top: 0; z-index: 100; background: white; border-bottom: 1px solid #ddd; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        #timer { font-size: 24px; font-weight: bold; color: var(--error); font-family: monospace; }
+
+        /* Savollar */
+        .q-card { border-left: 6px solid var(--primary); }
+        .option { padding: 15px; border: 2px solid #f0f0f0; margin: 10px 0; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 16px; }
+        .option.selected { border-color: var(--primary); background: #eff6ff; font-weight: 600; }
+
+        /* PASDAGI AYLANUVCHAN RAQAMLAR (GRID) */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); z-index: 1000; }
+        .q-grid { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 5px; scrollbar-width: none; }
+        .q-grid::-webkit-scrollbar { display: none; }
+        .q-num { min-width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: #e5e7eb; border-radius: 10px; font-weight: bold; flex-shrink: 0; cursor: pointer; }
         .q-num.done { background: var(--primary); color: white; }
-        
-        button { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; }
-        #timer { font-size: 42px; font-weight: 800; color: var(--error); text-align: center; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+
+        /* Result Styles */
+        .res-box { padding: 12px; border-radius: 10px; margin-top: 8px; font-size: 14px; }
+        .res-correct { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .res-wrong { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; }
+        input { width: 100%; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
+        .hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-<div id="login-screen" class="card center-card">
-    <h2 style="color: var(--primary);">IMTIHON TIZIMI</h2>
-    <input type="text" id="user-name" placeholder="F.I.SH kiriting" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;">
-    <button onclick="login()">Kirish</button>
+<div id="top-nav" class="top-bar hidden">
+    <div id="user-display" style="font-weight: bold; font-size: 14px; color: #555;"></div>
+    <div id="timer">30:00</div>
 </div>
 
-<div id="app" class="container hidden">
-    <div id="main-content">
-        <div id="admin-panel" class="card hidden">
-            <h3>🔧 Admin Panel</h3>
-            <input type="text" id="new-test-name" placeholder="Mavzu nomi">
-            <input type="file" id="upload-file" accept=".docx">
-            <button onclick="handleFileUpload()" style="background: var(--success); margin-bottom: 20px;">Yuklash</button>
-            <div style="overflow-x: auto;">
-                <table id="results-table">
-                    <thead><tr><th>FISH</th><th>Ball</th><th>Mavzu</th></tr></thead>
-                    <tbody id="results-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="topic-screen" class="card">
-            <h3>Mavzuni tanlang:</h3>
-            <div id="test-list"></div>
-            <button id="start-btn" onclick="startQuiz()" class="hidden" style="margin-top:20px; background: var(--success);">BOSHLASH</button>
-        </div>
-
-        <div id="questions-list" class="hidden"></div>
-
-        <div id="result-screen" class="card hidden">
-            <h2 style="text-align:center;">Test Yakunlandi!</h2>
-            <div class="score-circle" id="final-score">0/25</div>
-            <div id="result-summary" style="text-align:center; margin-bottom:20px; font-size:18px;"></div>
-            <hr>
-            <h3>Xatolar ustida ishlash:</h3>
-            <div id="analysis-box"></div>
-            <button onclick="location.reload()" style="margin-top:20px; background: #6b7280;">Chiqish</button>
-        </div>
+<div class="container">
+    <div id="login-screen" class="card" style="margin-top: 50px;">
+        <h2 style="text-align:center; color: var(--primary);">TEST TIZIMI</h2>
+        <input type="text" id="user-name" placeholder="F.I.SH kiriting">
+        <button onclick="login()">Kirish</button>
     </div>
 
-    <div id="sidebar" class="hidden">
-        <div class="card" style="position: sticky; top: 20px;">
-            <div id="timer">30:00</div>
-            <div class="q-grid" id="q-grid"></div>
-            <hr>
-            <button onclick="confirmFinish()" style="background: var(--error);">Tugatish</button>
+    <div id="admin-panel" class="card hidden">
+        <h3>Admin Panel</h3>
+        <input type="text" id="new-test-name" placeholder="Mavzu nomi">
+        <input type="file" id="upload-file" accept=".docx">
+        <button onclick="handleFileUpload()" style="background:var(--success)">Bazaga yuklash</button>
+        <div style="overflow-x:auto; margin-top:20px;">
+            <table border="1" style="width:100%; border-collapse: collapse; font-size: 12px;">
+                <thead><tr><th>FISH</th><th>Ball</th><th>Mavzu</th></tr></thead>
+                <tbody id="results-body"></tbody>
+            </table>
         </div>
+        <button onclick="clearResults()" style="background:var(--error); margin-top:15px; padding: 8px;">Natijalarni tozalash</button>
     </div>
+
+    <div id="topic-screen" class="card hidden">
+        <h3>Testni tanlang:</h3>
+        <div id="test-list"></div>
+        <button id="start-btn" class="hidden" onclick="startQuiz()" style="background:var(--success); margin-top: 20px;">TESTNI BOSHLASH</button>
+    </div>
+
+    <div id="questions-list" class="hidden"></div>
+
+    <div id="result-screen" class="card hidden">
+        <h2 style="text-align:center;">Sizning natijangiz</h2>
+        <div id="final-score" style="text-align:center; font-size:48px; font-weight:bold; color:var(--primary);">0/25</div>
+        <div id="analysis-box" style="margin-top:25px;"></div>
+        <button onclick="location.reload()" style="background:#666; margin-top: 20px;">Chiqish</button>
+    </div>
+</div>
+
+<div id="bottom-bar" class="bottom-nav hidden">
+    <div class="q-grid" id="q-grid"></div>
+    <button onclick="confirmFinish()" style="background:var(--error); margin-top: 10px; padding: 10px;">Testni yakunlash</button>
 </div>
 
 <script>
+    // --- FIREBASE SETTINGS ---
     const firebaseConfig = {
         apiKey: "AIzaSyBcn2bYdcDlWB-TFtuz5qWanO3aF_b9NCY",
         authDomain: "j-exam.firebaseapp.com",
@@ -106,14 +110,32 @@
 
     function login() {
         uName = document.getElementById('user-name').value.trim();
-        if(!uName) return alert("Ism kiriting!");
+        if(!uName) return alert("F.I.SH kiriting!");
         document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('user-display').innerText = uName;
+        
         if(uName.toLowerCase() === "admin777") {
             document.getElementById('admin-panel').classList.remove('hidden');
             loadAdminResults();
+        } else {
+            document.getElementById('topic-screen').classList.remove('hidden');
         }
         loadTests();
+    }
+
+    function loadTests() {
+        db.ref('tests').on('value', s => {
+            let tests = s.val(), h = "";
+            for(let id in tests) h += `<div onclick="selectTest('${id}')" class="option">${id}</div>`;
+            document.getElementById('test-list').innerHTML = h || "Hozircha test yo'q.";
+        });
+    }
+
+    function selectTest(id) {
+        selectedTestId = id;
+        document.getElementById('start-btn').classList.remove('hidden');
+        document.querySelectorAll('#test-list .option').forEach(el => el.classList.remove('selected'));
+        event.target.classList.add('selected');
     }
 
     function shuffle(array) {
@@ -135,8 +157,9 @@
             });
             isTestRunning = true;
             document.getElementById('topic-screen').classList.add('hidden');
+            document.getElementById('top-nav').classList.remove('hidden');
             document.getElementById('questions-list').classList.remove('hidden');
-            document.getElementById('sidebar').classList.remove('hidden');
+            document.getElementById('bottom-bar').classList.remove('hidden');
             renderQuiz();
             renderGrid();
             startTimer();
@@ -146,13 +169,19 @@
     function renderQuiz() {
         let h = "";
         testQs.forEach((q, i) => {
-            h += `<div class="q-card" id="q-${i}"><p><b>${i+1}. ${q.title}</b></p>`;
+            h += `<div class="card q-card" id="q-${i}"><p><b>${i+1}. ${q.title}</b></p>`;
             q.options.forEach((o, oi) => {
                 h += `<div class="option" id="opt-${i}-${oi}" onclick="selectAnswer(${i}, ${oi})">${o}</div>`;
             });
             h += `</div>`;
         });
         document.getElementById('questions-list').innerHTML = h;
+    }
+
+    function renderGrid() {
+        let h = "";
+        testQs.forEach((_, i) => h += `<div class="q-num" id="grid-${i}" onclick="document.getElementById('q-${i}').scrollIntoView({behavior:'smooth'})">${i+1}</div>`);
+        document.getElementById('q-grid').innerHTML = h;
     }
 
     function selectAnswer(qI, oI) {
@@ -172,6 +201,8 @@
         }, 1000);
     }
 
+    function confirmFinish() { if(confirm("Testni yakunlaysizmi?")) finishQuiz(); }
+
     function finishQuiz() {
         clearInterval(timer);
         isTestRunning = false;
@@ -182,59 +213,41 @@
             let uIdx = userAns[i];
             let isCorrect = uIdx === q.correct;
             if(isCorrect) score++;
-
-            analysisHtml += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+            analysisHtml += `<div class="card" style="padding:10px; margin-bottom:10px">
                 <p><b>${i+1}. ${q.title}</b></p>
-                <div class="${isCorrect ? 'res-correct' : 'res-wrong'}">
-                    Sizning javobingiz: ${uIdx !== undefined ? q.options[uIdx] : "Javob berilmagan"}
-                </div>
-                ${!isCorrect ? `<div class="res-correct" style="margin-top:5px;">To'g'ri javob: ${q.options[q.correct]}</div>` : ''}
+                <div class="res-box ${isCorrect ? 'res-correct' : 'res-wrong'}">Siz: ${uIdx !== undefined ? q.options[uIdx] : "Javobsiz"}</div>
+                ${!isCorrect ? `<div class="res-box res-correct">To'g'ri: ${q.options[q.correct]}</div>` : ''}
             </div>`;
         });
 
-        // Firebasega saqlash
         db.ref('results').push({ name: uName, score, total: testQs.length, testName: selectedTestId });
-
-        // Natijani ko'rsatish
+        
         document.getElementById('questions-list').classList.add('hidden');
-        document.getElementById('sidebar').classList.add('hidden');
+        document.getElementById('bottom-bar').classList.add('hidden');
+        document.getElementById('top-nav').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
-        document.getElementById('final-score').innerText = `${score}/${testQs.length}`;
-        document.getElementById('result-summary').innerHTML = `Foiz ko'rsatkichi: <b>${Math.round(score/testQs.length*100)}%</b>`;
+        document.getElementById('final-score').innerText = `${score} / ${testQs.length}`;
         document.getElementById('analysis-box').innerHTML = analysisHtml;
+        window.scrollTo(0,0);
     }
 
-    // Yordamchi funksiyalar (Testlarni yuklash va h.k.)
-    function loadTests() {
-        db.ref('tests').on('value', s => {
-            let tests = s.val(), h = "";
-            for(let id in tests) h += `<div onclick="selectTest('${id}')" class="option">${id}</div>`;
-            document.getElementById('test-list').innerHTML = h || "Test yuklanmagan.";
-        });
-    }
-    function selectTest(id) {
-        selectedTestId = id;
-        document.getElementById('start-btn').classList.remove('hidden');
-        document.querySelectorAll('#test-list .option').forEach(el => el.classList.remove('selected'));
-        event.target.classList.add('selected');
-    }
-    function confirmFinish() { if(confirm("Tugatasizmi?")) finishQuiz(); }
-    
-    // Word faylni parse qilish (avvalgi mantiq)
+    // Admin Tools
     async function handleFileUpload() {
         const fileInput = document.getElementById('upload-file');
         const testName = document.getElementById('new-test-name').value.trim();
+        if(!fileInput.files[0] || !testName) return alert("Fayl tanlang!");
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
-            const questions = parseWord(result.value);
-            db.ref('tests/' + testName).set(questions).then(() => alert("Tayyor!"));
+            const res = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+            const qs = parseWord(res.value);
+            db.ref('tests/' + testName).set(qs).then(() => alert("Yuklandi!"));
         };
         reader.readAsArrayBuffer(fileInput.files[0]);
     }
+
     function parseWord(text) {
         const lines = text.split('\n').map(l => l.trim()).filter(l => l !== "");
-        let quiz = []; let currentQ = null;
+        let quiz = [], currentQ = null;
         lines.forEach(line => {
             if (line === "++++") { if (currentQ) quiz.push(currentQ); currentQ = { title: "", options: [], correct: 0 }; }
             else if (line === "====") return;
@@ -247,13 +260,15 @@
         });
         if (currentQ) quiz.push(currentQ); return quiz;
     }
+
     function loadAdminResults() {
         db.ref('results').on('value', s => {
             let h = "";
-            if(s.val()) Object.values(s.val()).forEach(r => h += `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.testName}</td></tr>`);
+            if(s.val()) Object.values(s.val()).reverse().forEach(r => h += `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.testName}</td></tr>`);
             document.getElementById('results-body').innerHTML = h;
         });
     }
+    function clearResults() { if(confirm("O'chirilsinmi?")) db.ref('results').remove(); }
 </script>
 </body>
 </html>
