@@ -3,93 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>J-Exam - Modern Mobile</title>
+    <title>J-Exam Pro - Score & Percent</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     
     <style>
-        :root { --primary: #4f46e5; --success: #10b981; --error: #ef4444; --bg: #f3f4f6; }
+        :root { --primary: #4f46e5; --success: #10b981; --error: #ef4444; --bg: #f3f4f6; --dark: #1f2937; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; padding-bottom: 100px; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 120px; }
 
-        .container { width: 100%; max-width: 800px; margin: 0 auto; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
-        /* Timer tepada qat'iy turishi uchun */
-        .top-bar { position: sticky; top: 0; z-index: 100; background: white; border-bottom: 1px solid #ddd; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-        #timer { font-size: 24px; font-weight: bold; color: var(--error); font-family: monospace; }
+        /* Top Bar */
+        .top-bar { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #eee; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        #timer { font-size: 22px; font-weight: 800; color: var(--error); }
 
-        /* Savollar */
-        .q-card { border-left: 6px solid var(--primary); }
-        .option { padding: 15px; border: 2px solid #f0f0f0; margin: 10px 0; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 16px; }
-        .option.selected { border-color: var(--primary); background: #eff6ff; font-weight: 600; }
+        /* Natija sirkulari */
+        .result-circle {
+            width: 150px; height: 150px; border-radius: 50%;
+            background: conic-gradient(var(--success) 0deg, #eee 0deg);
+            display: flex; align-items: center; justify-content: center;
+            margin: 20px auto; position: relative; transition: 1s ease-in-out;
+        }
+        .result-circle::before {
+            content: ""; position: absolute; width: 120px; height: 120px;
+            background: white; border-radius: 50%;
+        }
+        .result-inner { position: relative; text-align: center; z-index: 1; }
+        .percent-text { font-size: 28px; font-weight: 900; color: var(--dark); }
 
-        /* PASDAGI AYLANUVCHAN RAQAMLAR (GRID) */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); z-index: 1000; }
-        .q-grid { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 5px; scrollbar-width: none; }
-        .q-grid::-webkit-scrollbar { display: none; }
-        .q-num { min-width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: #e5e7eb; border-radius: 10px; font-weight: bold; flex-shrink: 0; cursor: pointer; }
+        .q-card b { display: block; margin-bottom: 15px; font-size: 17px; color: var(--dark); }
+        .option { padding: 14px; border: 2px solid #f3f4f6; margin: 10px 0; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .option.selected { border-color: var(--primary); background: #f5f3ff; color: var(--primary); font-weight: 600; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1000; border-radius: 20px 20px 0 0; }
+        .q-grid { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; }
+        .q-num { min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 10px; font-weight: bold; flex-shrink: 0; }
         .q-num.done { background: var(--primary); color: white; }
 
-        /* Result Styles */
-        .res-box { padding: 12px; border-radius: 10px; margin-top: 8px; font-size: 14px; }
-        .res-correct { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .res-wrong { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .res-correct { background: #ecfdf5; color: #065f46; padding: 10px; border-radius: 10px; margin-top: 5px; border: 1px solid #a7f3d0; }
+        .res-wrong { background: #fef2f2; color: #991b1b; padding: 10px; border-radius: 10px; margin-top: 5px; border: 1px solid #fecaca; }
 
-        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; }
-        input { width: 100%; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
+        button { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: 700; cursor: pointer; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
 <div id="top-nav" class="top-bar hidden">
-    <div id="user-display" style="font-weight: bold; font-size: 14px; color: #555;"></div>
+    <div id="user-display" style="font-weight: 700;"></div>
     <div id="timer">30:00</div>
 </div>
 
 <div class="container">
     <div id="login-screen" class="card" style="margin-top: 50px;">
-        <h2 style="text-align:center; color: var(--primary);">TEST TIZIMI</h2>
-        <input type="text" id="user-name" placeholder="F.I.SH kiriting">
-        <button onclick="login()">Kirish</button>
-    </div>
-
-    <div id="admin-panel" class="card hidden">
-        <h3>Admin Panel</h3>
-        <input type="text" id="new-test-name" placeholder="Mavzu nomi">
-        <input type="file" id="upload-file" accept=".docx">
-        <button onclick="handleFileUpload()" style="background:var(--success)">Bazaga yuklash</button>
-        <div style="overflow-x:auto; margin-top:20px;">
-            <table border="1" style="width:100%; border-collapse: collapse; font-size: 12px;">
-                <thead><tr><th>FISH</th><th>Ball</th><th>Mavzu</th></tr></thead>
-                <tbody id="results-body"></tbody>
-            </table>
-        </div>
-        <button onclick="clearResults()" style="background:var(--error); margin-top:15px; padding: 8px;">Natijalarni tozalash</button>
+        <h2 style="text-align:center; color: var(--primary);">J-Exam Login</h2>
+        <input type="text" id="user-name" style="width:100%; padding:15px; border:1px solid #ddd; border-radius:10px; margin-bottom:15px" placeholder="Ismingizni yozing">
+        <button onclick="login()">Boshlash</button>
     </div>
 
     <div id="topic-screen" class="card hidden">
-        <h3>Testni tanlang:</h3>
+        <h3>Mavzuni tanlang:</h3>
         <div id="test-list"></div>
-        <button id="start-btn" class="hidden" onclick="startQuiz()" style="background:var(--success); margin-top: 20px;">TESTNI BOSHLASH</button>
+        <button id="start-btn" class="hidden" onclick="startQuiz()" style="background:var(--success); margin-top: 15px;">TESTNI BOSHLASH</button>
     </div>
 
     <div id="questions-list" class="hidden"></div>
 
     <div id="result-screen" class="card hidden">
-        <h2 style="text-align:center;">Sizning natijangiz</h2>
-        <div id="final-score" style="text-align:center; font-size:48px; font-weight:bold; color:var(--primary);">0/25</div>
-        <div id="analysis-box" style="margin-top:25px;"></div>
-        <button onclick="location.reload()" style="background:#666; margin-top: 20px;">Chiqish</button>
+        <h2 style="text-align:center; margin-bottom:10px">Natija</h2>
+        
+        <div class="result-circle" id="res-circle">
+            <div class="result-inner">
+                <div class="percent-text" id="res-percent">0%</div>
+                <div style="font-size:12px; color:#666">Umumiy ball</div>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content: space-around; text-align:center; margin-bottom:20px">
+            <div><b id="res-score" style="font-size:20px; color:var(--success)">0</b><br><small>To'g'ri</small></div>
+            <div><b id="res-total" style="font-size:20px; color:var(--primary)">25</b><br><small>Jami</small></div>
+            <div><b id="res-points" style="font-size:20px; color:var(--dark)">0</b><br><small>Ball (100)</small></div>
+        </div>
+
+        <div id="analysis-box"></div>
+        <button onclick="location.reload()" style="background:var(--dark); margin-top:20px">Chiqish</button>
     </div>
 </div>
 
 <div id="bottom-bar" class="bottom-nav hidden">
     <div class="q-grid" id="q-grid"></div>
-    <button onclick="confirmFinish()" style="background:var(--error); margin-top: 10px; padding: 10px;">Testni yakunlash</button>
+    <button onclick="confirmFinish()" style="background:var(--error); margin-top:10px">Tugatish</button>
 </div>
 
 <script>
@@ -106,20 +113,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let uName = "", selectedTestId = "", testQs = [], userAns = {}, timer, isTestRunning = false;
+    let uName = "", selectedTestId = "", testQs = [], userAns = {}, timer, timeLeft = 1800;
 
     function login() {
         uName = document.getElementById('user-name').value.trim();
-        if(!uName) return alert("F.I.SH kiriting!");
+        if(!uName) return alert("Ism kiriting!");
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('user-display').innerText = uName;
-        
-        if(uName.toLowerCase() === "admin777") {
-            document.getElementById('admin-panel').classList.remove('hidden');
-            loadAdminResults();
-        } else {
-            document.getElementById('topic-screen').classList.remove('hidden');
-        }
+        document.getElementById('topic-screen').classList.remove('hidden');
         loadTests();
     }
 
@@ -127,7 +128,7 @@
         db.ref('tests').on('value', s => {
             let tests = s.val(), h = "";
             for(let id in tests) h += `<div onclick="selectTest('${id}')" class="option">${id}</div>`;
-            document.getElementById('test-list').innerHTML = h || "Hozircha test yo'q.";
+            document.getElementById('test-list').innerHTML = h;
         });
     }
 
@@ -138,24 +139,15 @@
         event.target.classList.add('selected');
     }
 
-    function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-
     function startQuiz() {
         db.ref('tests/' + selectedTestId).once('value', s => {
             let raw = s.val();
-            let selected = shuffle([...raw]).slice(0, 25);
+            let selected = [...raw].sort(() => 0.5 - Math.random()).slice(0, 25);
             testQs = selected.map(q => {
                 let opts = q.options.map((t, i) => ({ t, is: i === q.correct }));
-                let shuf = shuffle(opts);
-                return { title: q.title, options: shuf.map(o => o.t), correct: shuf.findIndex(o => o.is) };
+                opts.sort(() => 0.5 - Math.random());
+                return { title: q.title, options: opts.map(o => o.t), correct: opts.findIndex(o => o.is) };
             });
-            isTestRunning = true;
             document.getElementById('topic-screen').classList.add('hidden');
             document.getElementById('top-nav').classList.remove('hidden');
             document.getElementById('questions-list').classList.remove('hidden');
@@ -169,7 +161,7 @@
     function renderQuiz() {
         let h = "";
         testQs.forEach((q, i) => {
-            h += `<div class="card q-card" id="q-${i}"><p><b>${i+1}. ${q.title}</b></p>`;
+            h += `<div class="card q-card" id="q-${i}"><b>${i+1}. ${q.title}</b>`;
             q.options.forEach((o, oi) => {
                 h += `<div class="option" id="opt-${i}-${oi}" onclick="selectAnswer(${i}, ${oi})">${o}</div>`;
             });
@@ -192,83 +184,53 @@
     }
 
     function startTimer() {
-        let time = 30 * 60;
         timer = setInterval(() => {
-            time--;
-            let m = Math.floor(time/60), s = time%60;
+            timeLeft--;
+            let m = Math.floor(timeLeft/60), s = timeLeft%60;
             document.getElementById('timer').innerText = `${m}:${s<10?'0':''}${s}`;
-            if(time <= 0) finishQuiz();
+            if(timeLeft <= 0) finishQuiz();
         }, 1000);
     }
 
-    function confirmFinish() { if(confirm("Testni yakunlaysizmi?")) finishQuiz(); }
+    function confirmFinish() { if(confirm("Tugatasizmi?")) finishQuiz(); }
 
     function finishQuiz() {
         clearInterval(timer);
-        isTestRunning = false;
         let score = 0;
+        let total = testQs.length;
         let analysisHtml = "";
 
         testQs.forEach((q, i) => {
             let uIdx = userAns[i];
             let isCorrect = uIdx === q.correct;
             if(isCorrect) score++;
-            analysisHtml += `<div class="card" style="padding:10px; margin-bottom:10px">
+            analysisHtml += `<div class="card" style="padding:15px; margin-bottom:10px">
                 <p><b>${i+1}. ${q.title}</b></p>
-                <div class="res-box ${isCorrect ? 'res-correct' : 'res-wrong'}">Siz: ${uIdx !== undefined ? q.options[uIdx] : "Javobsiz"}</div>
-                ${!isCorrect ? `<div class="res-box res-correct">To'g'ri: ${q.options[q.correct]}</div>` : ''}
+                <div class="${isCorrect ? 'res-correct' : 'res-wrong'}">Siz: ${uIdx !== undefined ? q.options[uIdx] : "Javobsiz"}</div>
+                ${!isCorrect ? `<div class="res-correct">To'g'ri: ${q.options[q.correct]}</div>` : ''}
             </div>`;
         });
 
-        db.ref('results').push({ name: uName, score, total: testQs.length, testName: selectedTestId });
-        
+        let percent = Math.round((score / total) * 100);
+        let points = (score * (100 / total)).toFixed(1);
+
+        // Firebase-ga yuborish
+        db.ref('results').push({ name: uName, score, total, percent, points, test: selectedTestId });
+
         document.getElementById('questions-list').classList.add('hidden');
         document.getElementById('bottom-bar').classList.add('hidden');
         document.getElementById('top-nav').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
-        document.getElementById('final-score').innerText = `${score} / ${testQs.length}`;
+
+        // Natijani ko'rsatish
+        document.getElementById('res-percent').innerText = percent + "%";
+        document.getElementById('res-score').innerText = score;
+        document.getElementById('res-total').innerText = total;
+        document.getElementById('res-points').innerText = points;
+        document.getElementById('res-circle').style.background = `conic-gradient(var(--success) ${percent * 3.6}deg, #eee 0deg)`;
         document.getElementById('analysis-box').innerHTML = analysisHtml;
         window.scrollTo(0,0);
     }
-
-    // Admin Tools
-    async function handleFileUpload() {
-        const fileInput = document.getElementById('upload-file');
-        const testName = document.getElementById('new-test-name').value.trim();
-        if(!fileInput.files[0] || !testName) return alert("Fayl tanlang!");
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const res = await mammoth.extractRawText({ arrayBuffer: e.target.result });
-            const qs = parseWord(res.value);
-            db.ref('tests/' + testName).set(qs).then(() => alert("Yuklandi!"));
-        };
-        reader.readAsArrayBuffer(fileInput.files[0]);
-    }
-
-    function parseWord(text) {
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l !== "");
-        let quiz = [], currentQ = null;
-        lines.forEach(line => {
-            if (line === "++++") { if (currentQ) quiz.push(currentQ); currentQ = { title: "", options: [], correct: 0 }; }
-            else if (line === "====") return;
-            else if (currentQ && currentQ.title === "") currentQ.title = line;
-            else if (currentQ) {
-                let isC = line.startsWith("#");
-                if (isC) currentQ.correct = currentQ.options.length;
-                currentQ.options.push(isC ? line.replace("#","").trim() : line);
-            }
-        });
-        if (currentQ) quiz.push(currentQ); return quiz;
-    }
-
-    function loadAdminResults() {
-        db.ref('results').on('value', s => {
-            let h = "";
-            if(s.val()) Object.values(s.val()).reverse().forEach(r => h += `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.testName}</td></tr>`);
-            document.getElementById('results-body').innerHTML = h;
-        });
-    }
-    function clearResults() { if(confirm("O'chirilsinmi?")) db.ref('results').remove(); }
 </script>
 </body>
 </html>
