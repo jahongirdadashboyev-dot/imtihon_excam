@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>J-Exam Pro - Tahlil Tizimi</title>
+    <title>J-Exam Pro - Admin Boshqaruvi</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
         :root { --primary: #4f46e5; --success: #10b981; --error: #ef4444; --bg: #f3f4f6; --dark: #1f2937; }
@@ -30,7 +29,8 @@
         button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 14px; width: 100%; font-size: 16px; font-weight: 700; cursor: pointer; }
         .btn-danger { background: var(--error); }
         .hidden { display: none !important; }
-        .cat-btn { padding: 20px; border: 2px solid var(--primary); border-radius: 15px; text-align: center; cursor: pointer; font-weight: bold; margin: 10px 0; background: white; color: var(--primary); }
+        .admin-section { border-top: 2px solid #eee; padding-top: 15px; margin-top: 15px; }
+        .del-btn { background: none; color: var(--error); border: 1px solid var(--error); padding: 4px 8px; width: auto; font-size: 12px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -47,12 +47,6 @@
         <button onclick="login()">Kirish</button>
     </div>
 
-    <div id="cat-screen" class="card hidden">
-        <h3>Yo'nalishni tanlang:</h3>
-        <div class="cat-btn" onclick="selectCat('tests')">1-Kategoriya</div>
-        <div class="cat-btn" onclick="selectCat('tests_2')">2-Kategoriya</div>
-    </div>
-
     <div id="topic-screen" class="card hidden">
         <h3>Mavzuni tanlang:</h3>
         <div id="test-list"></div>
@@ -61,21 +55,33 @@
 
     <div id="admin-panel" class="card hidden">
         <h3 style="color: var(--error)">Admin Paneli</h3>
-        <select id="upload-cat" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px;">
-            <option value="tests">1-Kategoriya</option>
-            <option value="tests_2">2-Kategoriya</option>
-        </select>
-        <input type="text" id="new-test-name" placeholder="Mavzu nomi" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd;">
-        <input type="file" id="upload-file" accept=".docx" style="margin-bottom:10px">
-        <button onclick="handleFileUpload()" style="background:var(--success)">Savollarni yuklash</button>
-        <hr>
-        <div style="overflow-x:auto;">
-            <table id="admin-table" style="width:100%; border-collapse:collapse; font-size:13px;">
-                <thead><tr style="background:#eee"><th>Ism</th><th>Ball</th><th>Mavzu</th></tr></thead>
-                <tbody id="results-body"></tbody>
-            </table>
+        
+        <div class="admin-section">
+            <h4>Yangi test yuklash</h4>
+            <input type="text" id="new-test-name" placeholder="Mavzu nomi" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd;">
+            <input type="file" id="upload-file" accept=".docx" style="margin-bottom:10px">
+            <button onclick="handleFileUpload()" style="background:var(--success)">Yuklash</button>
         </div>
-        <button onclick="location.reload()" style="background:none; color:grey; margin-top:10px">Chiqish</button>
+
+        <div class="admin-section">
+            <h4>Mavjud testlar (O'chirish):</h4>
+            <div id="admin-topic-list"></div>
+        </div>
+
+        <div class="admin-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h4>Natijalar:</h4>
+                <button onclick="clearAllResults()" class="del-btn" style="background: var(--error); color: white;">Barchasini tozalash</button>
+            </div>
+            <div style="overflow-x:auto; margin-top: 10px;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead><tr style="background:#eee"><th>Ism</th><th>Kirgan vaqti</th><th>Ball</th><th>Mavzu</th></tr></thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <button onclick="location.reload()" style="background:none; color:grey; margin-top:15px">Chiqish</button>
     </div>
 
     <div id="questions-list" class="hidden"></div>
@@ -109,33 +115,29 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let uName = "", currentCat = "tests", selectedTestId = "", testQs = [], userAns = {}, timer, timeLeft = 1800;
+    let uName = "", selectedTestId = "", testQs = [], userAns = {}, timer, timeLeft = 1800, loginTime = "";
 
     function login() {
         uName = document.getElementById('user-name').value.trim();
         if(!uName) return alert("Ism kiriting");
+        loginTime = new Date().toLocaleTimeString();
+        
         document.getElementById('login-screen').classList.add('hidden');
         if(uName === "admin777") {
             document.getElementById('admin-panel').classList.remove('hidden');
-            loadAdminResults();
+            loadAdminData();
         } else {
             document.getElementById('user-display').innerText = uName;
-            document.getElementById('cat-screen').classList.remove('hidden');
+            document.getElementById('topic-screen').classList.remove('hidden');
+            loadTests();
         }
     }
 
-    function selectCat(cat) {
-        currentCat = cat;
-        document.getElementById('cat-screen').classList.add('hidden');
-        document.getElementById('topic-screen').classList.remove('hidden');
-        loadTests();
-    }
-
     function loadTests() {
-        db.ref(currentCat).on('value', s => {
+        db.ref('tests').on('value', s => {
             let tests = s.val(), h = "";
             for(let id in tests) h += `<div onclick="selectTest('${id}')" class="option">${id}</div>`;
-            document.getElementById('test-list').innerHTML = h;
+            document.getElementById('test-list').innerHTML = h || "Hozircha testlar yo'q";
         });
     }
 
@@ -147,7 +149,7 @@
     }
 
     function startQuiz() {
-        db.ref(currentCat + '/' + selectedTestId).once('value', s => {
+        db.ref('tests/' + selectedTestId).once('value', s => {
             testQs = [...s.val()].sort(() => 0.5 - Math.random()).slice(0, 25).map(q => {
                 let opts = q.options.map((t, i) => ({ t, isCorrect: i === q.correct }));
                 opts.sort(() => 0.5 - Math.random());
@@ -157,9 +159,7 @@
             document.getElementById('top-nav').classList.remove('hidden');
             document.getElementById('questions-list').classList.remove('hidden');
             document.getElementById('bottom-bar').classList.remove('hidden');
-            renderQuiz();
-            renderGrid();
-            startTimer();
+            renderQuiz(); renderGrid(); startTimer();
         });
     }
 
@@ -167,9 +167,7 @@
         let h = "";
         testQs.forEach((q, i) => {
             h += `<div class="card" id="q-card-${i}"><b>${i+1}. ${q.title}</b><br><br>`;
-            q.options.forEach((o, oi) => {
-                h += `<div class="option" id="opt-${i}-${oi}" onclick="selectAnswer(${i}, ${oi})">${o}</div>`;
-            });
+            q.options.forEach((o, oi) => h += `<div class="option" id="opt-${i}-${oi}" onclick="selectAnswer(${i}, ${oi})">${o}</div>`);
             h += `</div>`;
         });
         document.getElementById('questions-list').innerHTML = h;
@@ -213,42 +211,53 @@
             analysisHTML += `<div class="card"><p><b>${i+1}. ${q.title}</b></p>`;
             q.options.forEach((o, oi) => {
                 let cls = (oi === q.correct) ? "opt-correct" : (oi === userAns[i] ? "opt-wrong" : "");
-                let badge = (oi === q.correct) ? "<span class='badge' style='background:#10b981; color:white'>To'g'ri</span>" : (oi === userAns[i] ? "<span class='badge' style='background:#ef4444; color:white'>Sizniki</span>" : "");
-                analysisHTML += `<div class="option ${cls}">${o} ${badge}</div>`;
+                analysisHTML += `<div class="option ${cls}">${o}</div>`;
             });
             analysisHTML += `</div>`;
         });
         let percent = Math.round((correctCount / testQs.length) * 100);
-        db.ref('results').push({ name: uName, percent, test: selectedTestId, date: new Date().toLocaleString() });
+        db.ref('results').push({ name: uName, percent, test: selectedTestId, time: loginTime, date: new Date().toLocaleDateString() });
+        
         document.getElementById('top-nav').classList.add('hidden');
         document.getElementById('questions-list').classList.add('hidden');
         document.getElementById('bottom-bar').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
         document.getElementById('score-circle').innerText = percent + "%";
-        document.getElementById('res-detail').innerText = `To'g'ri: ${correctCount} ta.`;
         document.getElementById('analysis-list').innerHTML = analysisHTML;
-        window.scrollTo(0,0);
     }
 
-    function loadAdminResults() {
+    // --- ADMIN PANEL FUNKSIYALARI ---
+    function loadAdminData() {
+        // Natijalarni yuklash
         db.ref('results').on('value', s => {
             let h = "";
             if(s.val()) Object.values(s.val()).reverse().forEach(r => {
-                h += `<tr><td>${r.name}</td><td>${r.percent}%</td><td>${r.test}</td></tr>`;
+                h += `<tr><td>${r.name}</td><td>${r.time}</td><td>${r.percent}%</td><td>${r.test}</td></tr>`;
             });
             document.getElementById('results-body').innerHTML = h;
+        });
+
+        // Testlar ro'yxatini yuklash (o'chirish uchun)
+        db.ref('tests').on('value', s => {
+            let h = "";
+            if(s.val()) Object.keys(s.val()).forEach(id => {
+                h += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span>${id}</span>
+                        <button class="del-btn" onclick="deleteTest('${id}')">O'chirish</button>
+                      </div>`;
+            });
+            document.getElementById('admin-topic-list').innerHTML = h || "Testlar yo'q";
         });
     }
 
     async function handleFileUpload() {
         const file = document.getElementById('upload-file').files[0];
-        const name = document.getElementById('new-test-name').value;
-        const cat = document.getElementById('upload-cat').value;
-        if(!file || !name) return alert("To'liq kiriting");
+        const name = document.getElementById('new-test-name').value.trim();
+        if(!file || !name) return alert("Fayl va mavzu nomini kiriting");
+
         const reader = new FileReader();
         reader.onload = async (e) => {
             const res = await mammoth.extractRawText({ arrayBuffer: e.target.result });
-            // ==== belgilarini variantdan tozalash
             const lines = res.value.split('\n').map(l => l.trim()).filter(l => l !== "" && l !== "====");
             let quiz = [], curr = null;
             lines.forEach(l => {
@@ -260,11 +269,25 @@
                 }
             });
             if(curr) quiz.push(curr);
-            db.ref(cat + '/' + name).set(quiz).then(() => location.reload());
+            db.ref('tests/' + name).set(quiz).then(() => {
+                alert("Test yuklandi!");
+                document.getElementById('new-test-name').value = "";
+            });
         };
         reader.readAsArrayBuffer(file);
+    }
+
+    function deleteTest(id) {
+        if(confirm(`"${id}" mavzusini o'chirib tashlaysizmi?`)) {
+            db.ref('tests/' + id).remove();
+        }
+    }
+
+    function clearAllResults() {
+        if(confirm("DIQQAT: Barcha natijalar butunlay o'chiriladi. Rozimisiz?")) {
+            db.ref('results').remove();
+        }
     }
 </script>
 </body>
 </html>
-
