@@ -177,8 +177,9 @@
 
 <script>
     // FIREBASE KONFIGURATSIYASI
+    // Xavfsizlik uchun apiKey placeholder bilan almashtirildi
     const firebaseConfig = {
-        apiKey: "AIzaSyBcn2bYdcDlWB-TFtuz5qWanO3aF_b9NCY",
+        apiKey: "YOUR_API_KEY_HERE",
         authDomain: "j-exam.firebaseapp.com",
         databaseURL: "https://j-exam-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "j-exam",
@@ -186,6 +187,7 @@
         messagingSenderId: "370411029242",
         appId: "1:370411029242:web:3a677a92d2b4309a8dff43"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
