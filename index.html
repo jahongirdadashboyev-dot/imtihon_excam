@@ -14,15 +14,14 @@
             --primary: #818cf8; 
             --success: #34d399; 
             --error: #fb7185; 
-            --bg-dark: #0f172a; /* To'q ko'k fon */
-            --glass: rgba(30, 41, 59, 0.7); /* Shishasimon to'q fon */
+            --bg-dark: #0f172a;
+            --glass: rgba(30, 41, 59, 0.7);
             --text: #f8fafc;
         }
 
         * { box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
 
         body { 
-            /* Yumshoqroq va chuqurroq gradient */
             background: radial-gradient(circle at top right, #1e1b4b, #0f172a, #020617);
             margin: 0; 
             padding-bottom: 120px; 
@@ -31,7 +30,6 @@
             overflow-x: hidden;
         }
 
-        /* Orqa fondagi harakatlanuvchi nurlar (Atmosfera yaratish uchun) */
         body::before {
             content: "";
             position: fixed;
@@ -48,9 +46,27 @@
             to { transform: translate(50vw, 50vh); }
         }
 
+        /* --- LOGOTIP STILI --- */
+        .logo-box {
+            width: 45px; height: 45px;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: 800; color: white;
+            box-shadow: 0 8px 20px rgba(129, 140, 248, 0.3);
+            position: relative; overflow: hidden;
+            margin-right: 15px;
+        }
+        .logo-box::after {
+            content: ""; position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .flex-align { display: flex; align-items: center; }
+
         .container { width: 100%; max-width: 700px; margin: 0 auto; padding: 20px; }
 
-        /* Premium Glassmorphism Kartalar */
         .card { 
             background: var(--glass); 
             backdrop-filter: blur(16px); 
@@ -60,14 +76,13 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
             margin-bottom: 25px; 
             border: 1px solid rgba(255, 255, 255, 0.1); 
-            transition: 0.3s;
         }
 
         .top-bar { 
             position: sticky; top: 0; z-index: 100; 
             background: rgba(15, 23, 42, 0.8); 
             backdrop-filter: blur(10px); 
-            padding: 15px 25px; 
+            padding: 12px 25px; 
             display: flex; justify-content: space-between; align-items: center; 
             border-bottom: 1px solid rgba(255,255,255,0.05); 
         }
@@ -76,7 +91,6 @@
             background: rgba(251, 113, 133, 0.1);
             color: var(--error); 
             font-weight: 700; 
-            font-size: 18px; 
             padding: 5px 15px; 
             border-radius: 12px;
             border: 1px solid var(--error);
@@ -89,25 +103,22 @@
             margin: 12px 0; 
             border-radius: 18px; 
             cursor: pointer; 
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
-            font-size: 16px; 
+            transition: all 0.25s; 
         }
 
         .option:hover { 
             background: rgba(255, 255, 255, 0.08); 
-            border-color: var(--primary);
-            transform: scale(1.02);
+            transform: scale(1.01);
         }
 
         .option.selected { 
             background: var(--primary); 
             color: white; 
-            border-color: var(--primary);
             box-shadow: 0 10px 20px rgba(129, 140, 248, 0.3);
         }
         
-        .opt-correct { background: var(--success) !important; color: #022c22 !important; border-color: var(--success); }
-        .opt-wrong { background: var(--error) !important; color: #450a0a !important; border-color: var(--error); }
+        .opt-correct { background: var(--success) !important; color: #022c22 !important; }
+        .opt-wrong { background: var(--error) !important; color: #450a0a !important; }
 
         .bottom-nav { 
             position: fixed; bottom: 0; left: 0; right: 0; 
@@ -117,53 +128,49 @@
         }
 
         .q-grid { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scrollbar-width: none; }
-        .q-grid::-webkit-scrollbar { display: none; }
-
         .q-num { 
             min-width: 45px; height: 45px; border-radius: 14px; 
             background: rgba(255,255,255,0.05); 
             display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
+            font-weight: bold; border: 1px solid rgba(255,255,255,0.1);
         }
-        .q-num.done { background: var(--primary); border-color: var(--primary); }
+        .q-num.done { background: var(--primary); }
 
         button { 
             background: var(--primary); color: white; border: none; padding: 18px; border-radius: 20px; 
             width: 100%; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        button:hover { filter: brightness(1.2); transform: translateY(-3px); }
+        button:hover { filter: brightness(1.2); transform: translateY(-2px); }
         
         input {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: white;
-            padding: 15px;
-            border-radius: 15px;
-            width: 100%;
-            outline: none;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: white; padding: 15px; border-radius: 15px; width: 100%; outline: none;
         }
-        input:focus { border-color: var(--primary); }
 
         .btn-danger { background: var(--error); }
         .hidden { display: none !important; }
         
-        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-top: 15px; }
-        th { color: #94a3b8; font-weight: 500; text-align: left; padding: 10px; }
-        td { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px 0 0 12px; }
-        td:last-child { border-radius: 0 12px 12px 0; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        th { color: #94a3b8; text-align: left; padding: 10px; }
+        td { background: rgba(255,255,255,0.03); padding: 15px; }
     </style>
 </head>
 <body>
 
 <div id="top-nav" class="top-bar hidden">
-    <div id="user-display" style="font-weight: 600; font-size: 14px;"></div>
+    <div class="flex-align">
+        <div class="logo-box" style="width:32px; height:32px; font-size:16px; border-radius:8px; margin-right:10px;">J</div>
+        <div id="user-display" style="font-weight: 600; font-size: 14px;"></div>
+    </div>
     <div id="timer">30:00</div>
 </div>
 
 <div class="container">
     <div id="login-screen" class="card" style="margin-top: 80px; text-align: center;">
-        <h1 style="letter-spacing: 2px; margin-bottom: 5px;">J-EXAM <span style="color: var(--primary)">PRO</span></h1>
+        <div class="flex-center" style="margin-bottom: 20px;">
+            <div class="logo-box" style="width: 60px; height: 60px; font-size: 32px; border-radius: 18px;">J</div>
+            <h1 style="letter-spacing: 2px; margin: 0;">J-EXAM <span style="color: var(--primary)">PRO</span></h1>
+        </div>
         <p style="color: #94a3b8; margin-bottom: 30px;">Bilimingizni sinash vaqti keldi</p>
         <input type="text" id="user-name" placeholder="Ism-familiyangizni yozing..." style="margin-bottom:20px; font-size:16px;">
         <button onclick="login()">BOSHLASH</button>
@@ -171,30 +178,26 @@
 
     <div id="topic-screen" class="card hidden">
         <h2 style="margin-top:0">Mavzular</h2>
-        <p style="color: #94a3b8; font-size: 14px;">Davom etish uchun test mavzusini tanlang:</p>
         <div id="test-list" style="margin-top: 20px;"></div>
         <button id="start-btn" class="hidden" onclick="startQuiz()" style="background:var(--success); margin-top:20px">TESTGA KIRISH</button>
     </div>
 
     <div id="admin-panel" class="card hidden">
         <h2 style="color: var(--error); margin-top:0">Boshqaruv Paneli</h2>
-        
         <div class="admin-section">
-            <h4 style="margin-bottom: 10px;">Yangi Test Yuklash</h4>
+            <h4>Yangi Test Yuklash</h4>
             <input type="text" id="new-test-name" placeholder="Mavzu nomi" style="margin-bottom:10px;">
-            <input type="file" id="upload-file" accept=".docx" style="margin-bottom:15px; background: none; padding: 0;">
+            <input type="file" id="upload-file" accept=".docx" style="margin-bottom:15px;">
             <button onclick="handleFileUpload()" style="background:var(--success)">TIZIMGA QO'SHISH</button>
         </div>
-
         <div class="admin-section">
             <h4>Mavjud Testlar</h4>
             <div id="admin-topic-list"></div>
         </div>
-
         <div class="admin-section">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h4>Natijalar Jadvali</h4>
-                <button onclick="clearAllResults()" class="del-btn" style="width: auto; padding: 5px 15px; background: rgba(251, 113, 133, 0.2); border: 1px solid var(--error); color: var(--error);">Tozalash</button>
+                <button onclick="clearAllResults()" style="width: auto; padding: 5px 15px; background: rgba(251, 113, 133, 0.2); color: var(--error); border: 1px solid var(--error);">Tozalash</button>
             </div>
             <div style="overflow-x:auto;">
                 <table>
@@ -203,7 +206,6 @@
                 </table>
             </div>
         </div>
-        
         <button onclick="location.reload()" style="background:none; color:#64748b; margin-top:30px; border: 1px solid #334155;">Chiqish</button>
     </div>
 
@@ -211,9 +213,9 @@
 
     <div id="result-screen" class="hidden">
         <div class="card" style="text-align: center;">
-            <h2 id="res-status">Sizning Natijangiz</h2>
+            <h2>Natijangiz</h2>
             <div id="score-circle" style="font-size: 64px; font-weight: 900; color: var(--primary); margin: 20px 0;">0%</div>
-            <p id="res-detail" style="color: #94a3b8; font-size: 18px; margin-bottom: 30px;"></p>
+            <p id="res-detail" style="color: #94a3b8; margin-bottom: 30px;"></p>
             <button onclick="location.reload()">ASOSIY MENYU</button>
         </div>
         <div id="analysis-list"></div>
@@ -222,11 +224,10 @@
 
 <div id="bottom-bar" class="bottom-nav hidden">
     <div class="q-grid" id="q-grid"></div>
-    <button class="btn-danger" onclick="confirmFinish()" style="padding: 15px;">TESTNI YAKUNLASH</button>
+    <button class="btn-danger" onclick="confirmFinish()">TESTNI YAKUNLASH</button>
 </div>
 
 <script>
-    // FIREBASE KONFIGURATSIYASI (API kalitni qayta joylang)
     const firebaseConfig = {
         apiKey: "AIzaSyBcn2bYdcDlWB-TFtuz5qWanO3aF_b9NCY",
         authDomain: "j-exam.firebaseapp.com",
@@ -244,15 +245,14 @@
 
     function login() {
         uName = document.getElementById('user-name').value.trim();
-        if(!uName) return alert("Iltimos, ismingizni kiriting!");
+        if(!uName) return alert("Ismingizni kiriting!");
         loginTime = new Date().toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'});
-        
         document.getElementById('login-screen').classList.add('hidden');
         if(uName === "admin777") {
             document.getElementById('admin-panel').classList.remove('hidden');
             loadAdminData();
         } else {
-            document.getElementById('user-display').innerText = "O'quvchi: " + uName;
+            document.getElementById('user-display').innerText = uName;
             document.getElementById('topic-screen').classList.remove('hidden');
             loadTests();
         }
@@ -305,9 +305,7 @@
         document.getElementById('q-grid').innerHTML = h;
     }
 
-    function scrollToQuestion(i) {
-        window.scrollTo({ top: document.getElementById(`q-card-${i}`).offsetTop - 100, behavior: 'smooth' });
-    }
+    function scrollToQuestion(i) { window.scrollTo({ top: document.getElementById(`q-card-${i}`).offsetTop - 100, behavior: 'smooth' }); }
 
     function selectAnswer(qI, oI) {
         userAns[qI] = oI;
@@ -329,8 +327,7 @@
 
     function finishQuiz() {
         clearInterval(timer);
-        let correctCount = 0;
-        let analysisHTML = "";
+        let correctCount = 0, analysisHTML = "";
         testQs.forEach((q, i) => {
             let isCorrect = userAns[i] === q.correct;
             if(isCorrect) correctCount++;
@@ -343,18 +340,16 @@
         });
         let percent = Math.round((correctCount / testQs.length) * 100);
         db.ref('results').push({ name: uName, percent, test: selectedTestId, time: loginTime, date: new Date().toLocaleDateString() });
-        
         document.getElementById('top-nav').classList.add('hidden');
         document.getElementById('questions-list').classList.add('hidden');
         document.getElementById('bottom-bar').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
         document.getElementById('score-circle').innerText = percent + "%";
-        document.getElementById('res-detail').innerText = `Siz 25 ta savoldan ${correctCount} tasiga javob berdingiz.`;
+        document.getElementById('res-detail').innerText = `Siz 25 ta savoldan ${correctCount} tasiga to'g'ri javob berdingiz.`;
         document.getElementById('analysis-list').innerHTML = analysisHTML;
         window.scrollTo(0,0);
     }
 
-    // ADMIN FUNKSIYALAR
     function loadAdminData() {
         db.ref('results').on('value', s => {
             let h = "";
@@ -397,7 +392,6 @@
         };
         reader.readAsArrayBuffer(file);
     }
-
     function deleteTest(id) { if(confirm("O'chirilsinmi?")) db.ref('tests/' + id).remove(); }
     function clearAllResults() { if(confirm("Barchasini tozalash?")) db.ref('results').remove(); }
 </script>
